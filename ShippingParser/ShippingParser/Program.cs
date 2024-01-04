@@ -4,16 +4,14 @@ namespace ShippingParser
 {
     public static class Program
     {
-        private static string _desktopPath;
         
         static void Main()
         {
             var filesAndPaths =  new FileAndPaths();
             
-            _desktopPath = filesAndPaths.DetermineDesktopPath();
-            
+            string desktopPath = filesAndPaths.DetermineDesktopPath();
             string newFolderName = "ShippingParsing";
-            string newFolderPath = Path.Combine(_desktopPath, newFolderName);
+            string newFolderPath = Path.Combine(desktopPath, newFolderName);
             
             if (!Directory.Exists(newFolderPath))
             {
@@ -22,10 +20,10 @@ namespace ShippingParser
             }
 
             // Set up a FileSystemWatcher to monitor the folder
-            FileSystemWatcher watcher = new FileSystemWatcher(newFolderPath);
+            var watcher = new FileSystemWatcher(newFolderPath);
             watcher.EnableRaisingEvents = true;
-            watcher.Created += filesAndPaths.SaveShippingInfoFromFileToDb;
-
+            watcher.Created += filesAndPaths.SaveShippingInfoFromFileToDbAsync;// function is async, should be there await???
+            
             Console.WriteLine($"Monitoring folder: {newFolderPath}");
 
             Console.WriteLine("Press Enter to exit.");

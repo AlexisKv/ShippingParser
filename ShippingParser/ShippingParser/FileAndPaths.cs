@@ -2,82 +2,107 @@
 
 public class FileAndPaths
 {
-    public string DetermineDesktopPath()
+    public async void SaveShippingInfoFromFileToDbAsync(object sender, FileSystemEventArgs e)
     {
-        if (Environment.OSVersion.Platform == PlatformID.Win32NT)
+        if (ShouldProcessFile(e))
         {
-           return Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
-        }
-        else if (Environment.OSVersion.Platform == PlatformID.Unix)
-        {
-            return Path.Combine(Environment.GetEnvironmentVariable("HOME"), "Desktop");
-        }
-        else
-        {
-            Console.WriteLine("Unsupported operating system.");
-            Environment.Exit(1);
-        }
+            var fileInfo = new FileInfo(e.FullPath);
 
-        return null;
-    }
-
-    public void SaveShippingInfoFromFileToDb(object sender, FileSystemEventArgs e)
-    {
-        if (e.ChangeType == WatcherChangeTypes.Created &&
-            Path.GetFileName(e.FullPath).Equals("data.txt", StringComparison.OrdinalIgnoreCase))
-        {
-            string content = File.ReadAllText(e.FullPath);
-            if (string.IsNullOrWhiteSpace(content))
+            if (fileInfo.Length <= 0)
             {
                 Console.WriteLine($"Text file '{e.Name}' created, but it is empty.");
                 return;
             }
-            else
+
+            await SaveDataToDatabaseAsync(e.FullPath);
+        }
+    }
+
+    public string DetermineDesktopPath()
+    {
+        string? desktopPath = null;
+
+        switch (Environment.OSVersion.Platform)
+        {
+            case PlatformID.Win32NT:
+                desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+                break;
+            case PlatformID.Unix:
+                desktopPath = Path.Combine(Environment.GetEnvironmentVariable("HOME"), "Desktop");
+                break;
+            default:
+                Console.WriteLine("Unsupported operating system.");
+                Environment.Exit(1);
+                break;
+        }
+
+        return desktopPath;
+    }
+
+
+    private async Task SaveDataToDatabaseAsync(string filePath)
+    {
+        using (var context = new MyDbContext()) ///using??
+        {
+            context.Database.EnsureCreated();
+
+            using (var streamReader = new StreamReader(filePath))
             {
-                using (var context = new MyDbContext())
+                Box? currentBox = null;
+
+                while (!streamReader.EndOfStream)
                 {
-                    context.Database.EnsureCreated();
-
-                    var lines = File.ReadAllLines(e.FullPath);
-                    Box currentBox = null;
-
-                    foreach (var line in lines)
-                    {
-                        if (line.StartsWith("HDR"))
-                        {
-                            if (currentBox != null) context.MyEntities.Add(currentBox);
-
-                            // New box is being described
-                            var tokens = ClearingAndSplittingLine(line);
-                            currentBox = new Box()
-                            {
-                                Identifier = tokens[1], //Should I create new Id or I can use same?
-                                SupplierIdentifier = tokens[2], //when it's adding box id?
-                                Contents = new List<Box.Content>()
-                            };
-                        }
-                        else if (line.StartsWith("LINE"))
-                        {
-                            // Product item in the box
-                            var tokens = ClearingAndSplittingLine(line);
-                            var boxContent = new Box.Content
-                            {
-                                PoNumber = tokens[1],
-                                Isbn = tokens[2],
-                                Quantity = int.Parse(tokens[3])
-                            };
-                            currentBox.Contents.Add(boxContent);
-                        }
-                    }
-
-                    if (currentBox != null) context.MyEntities.Add(currentBox);
-
-                    context.MyEntities.Add(currentBox);
-                    context.SaveChanges();
-                    Console.WriteLine("Saved to database");
+                    string? line = await streamReader.ReadLineAsync();
+                    ProcessLine(context, line, ref currentBox);
                 }
+
+                SavePreviousBoxToDatabase(context, currentBox);
+                Console.WriteLine("Shipping info fully saved to database");
             }
         }
+    }
+
+    private void SavePreviousBoxToDatabase(MyDbContext context, Box? currentBox)
+    {
+        if (currentBox != null)
+        {
+            context.MyEntities.Add(currentBox);
+        }
+
+        context.SaveChanges();
+    }
+
+    private void ProcessLine(MyDbContext context, string line, ref Box currentBox)
+    {
+        if (line.StartsWith("HDR"))
+        {
+            SavePreviousBoxToDatabase(context, currentBox);
+
+            var tokens = ClearingAndSplittingLine(line);
+            currentBox = new Box()
+            {
+                Identifier = tokens[1],
+                SupplierIdentifier = tokens[2],
+                Contents = new List<Box.Content>()
+            };
+        }
+        else if (line.StartsWith("LINE"))
+        {
+            var tokens = ClearingAndSplittingLine(line);
+            var boxContent = new Box.Content
+            {
+                PoNumber = tokens[1],
+                Isbn = tokens[2],
+                Quantity = int.Parse(tokens[3])
+            };
+            currentBox.Contents.Add(boxContent);
+        }
+    }
+
+    private bool ShouldProcessFile(FileSystemEventArgs e)
+    {
+        return e.ChangeType == WatcherChangeTypes.Created &&
+               Path.GetFileName(e.FullPath).Equals("data.txt", StringComparison.OrdinalIgnoreCase);
     }
 
     private string[] ClearingAndSplittingLine(string line)
