@@ -66,7 +66,7 @@ public class FileAndPaths
     {
         if (currentBox != null)
         {
-            context.MyEntities.Add(currentBox);
+            context.Boxes.Add(currentBox);
         }
 
         context.SaveChanges();
