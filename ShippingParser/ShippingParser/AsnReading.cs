@@ -2,19 +2,25 @@
 
 public class AsnReading
 {
+    public AsnReading(FileQueue fileQueue)
+    {
+        _fileQueue = fileQueue;
+    }
+
+    private FileQueue _fileQueue;
     private string _incompleteLine = string.Empty;
 
-    public async Task SaveDataToDatabaseAsync(string filePath)
+    public void StartReading(object sender, FileSystemEventArgs e)
     {
-        await using var context = new MyDbContext();
+        Task.Run(() => StartReadingAsync(sender, e));
+    }
 
-        await context.Database.EnsureCreatedAsync();
-
-        using var streamReader = new StreamReader(filePath);
+    private async Task StartReadingAsync(object sender, FileSystemEventArgs e)
+    {
+        using var streamReader = new StreamReader(e.FullPath);
         Box? currentBox = null;
-        char[] buffer = new char[1096]; // Chunk size (buffer size)4096
+        char[] buffer = new char[4096];
 
-        // Chunk 1: Reading lines in chunks
         bool moreContentToRead = true;
 
         while (moreContentToRead)
@@ -27,22 +33,16 @@ public class AsnReading
             }
             else
             {
-                ProcessBuffer(context, buffer, bytesRead, ref currentBox);
+                ProcessBuffer(buffer, bytesRead, ref currentBox);
             }
         }
 
-        // // Chunk 2: Save any remaining incomplete line
-        // if (!string.IsNullOrEmpty(_incompleteLine))
-        // {
-        //     ProcessLine(context, _incompleteLine, ref currentBox);
-        // }
+        if (currentBox != null) AddBox(currentBox);
 
-        // Chunk 3: Saving the last box and displaying a message
-        SavePreviousBoxToDatabase(context, currentBox);
         Console.WriteLine("Shipping info fully saved to database");
     }
 
-    private void ProcessBuffer(MyDbContext context, char[] buffer, int bytesRead, ref Box currentBox)
+    private void ProcessBuffer(char[] buffer, int bytesRead, ref Box currentBox)
     {
         int position = 0;
 
@@ -66,7 +66,7 @@ public class AsnReading
             string line = bufferContent.Substring(position, lineEnd - position);
 
             // Process the line
-            ProcessLine(context, line, ref currentBox);
+            ProcessLine(line, ref currentBox);
 
             // Move the position to the next line
             position = lineEnd + 1;
@@ -83,12 +83,14 @@ public class AsnReading
         }
     }
 
-    private void ProcessLine(MyDbContext context, string line, ref Box currentBox)
+    private void ProcessLine(string line, ref Box? currentBox)
     {
-        // Existing logic for processing lines
         if (line.StartsWith("HDR"))
         {
-            SavePreviousBoxToDatabase(context, currentBox);
+            if (currentBox != null)
+            {
+                AddBox(currentBox);
+            }
 
             var tokens = ClearingAndSplittingLine(line);
             currentBox = new Box()
@@ -116,13 +118,8 @@ public class AsnReading
         return line.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
     }
 
-    private void SavePreviousBoxToDatabase(MyDbContext context, Box? currentBox)
+    private void AddBox(Box box)
     {
-        if (currentBox != null)
-        {
-            context.Boxes.Add(currentBox);
-        }
-
-        context.SaveChanges();
+        _fileQueue.AddBox(box);
     }
 }
