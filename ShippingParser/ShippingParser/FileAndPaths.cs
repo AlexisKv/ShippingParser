@@ -2,6 +2,8 @@
 
 public class FileAndPaths
 {
+    private AsnReading asnReadier = new AsnReading();
+    
     public async void SaveShippingInfoFromFileToDbAsync(object sender, FileSystemEventArgs e)
     {
         if (ShouldProcessFile(e))
@@ -14,7 +16,7 @@ public class FileAndPaths
                 return;
             }
 
-            await SaveDataToDatabaseAsync(e.FullPath);
+            await asnReadier.SaveDataToDatabaseAsync(e.FullPath);
         }
     }
 
@@ -38,28 +40,27 @@ public class FileAndPaths
 
         return desktopPath;
     }
-
+    
 
     private async Task SaveDataToDatabaseAsync(string filePath)
     {
-        using (var context = new MyDbContext()) ///using??
+        await using var context = new MyDbContext();
+
+        // context.Database.EnsureCreated();
+
+        using var streamReader = new StreamReader(filePath);
+        Box? currentBox = null;
+        //this will possibility to add multi threading
+        // char[] buffer = new char[4096];
+
+        while (!streamReader.EndOfStream)
         {
-            context.Database.EnsureCreated();
-
-            using (var streamReader = new StreamReader(filePath))
-            {
-                Box? currentBox = null;
-
-                while (!streamReader.EndOfStream)
-                {
-                    string? line = await streamReader.ReadLineAsync();
-                    ProcessLine(context, line, ref currentBox);
-                }
-
-                SavePreviousBoxToDatabase(context, currentBox);
-                Console.WriteLine("Shipping info fully saved to database");
-            }
+            string? line = await streamReader.ReadLineAsync();
+            ProcessLine(context, line, ref currentBox);
         }
+
+        SavePreviousBoxToDatabase(context, currentBox);
+        Console.WriteLine("Shipping info fully saved to database");
     }
 
     private void SavePreviousBoxToDatabase(MyDbContext context, Box? currentBox)
