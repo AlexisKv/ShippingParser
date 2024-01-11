@@ -8,9 +8,9 @@ public class Box
     [Key] 
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int Id { get; set; }
-    public string Identifier { get; set; }
-    public string SupplierIdentifier { get; set; }
-    public List<Content> Contents { get; set; }
+    public string? Identifier { get; set; }
+    public string? SupplierIdentifier { get; set; }
+    public List<Content>? Contents { get; set; }
 
     public class Content
     {

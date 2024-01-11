@@ -5,13 +5,13 @@ namespace ShippingParser.Core;
 
 public class DataWriter : IObserver<Box>
 {
+    private int _lastBoxId;
+    private readonly AsnDbContext _context;
+    
     public DataWriter(AsnDbContext context)
     {
         _context = context;
     }
-
-    private int _lastBoxId;
-    private readonly AsnDbContext _context;
 
     public void OnCompleted()
     {
@@ -45,7 +45,6 @@ public class DataWriter : IObserver<Box>
     private void SaveContentToDatabase(AsnDbContext context, Box currentBox)
     {
         context.Boxes.Find(_lastBoxId).Contents.Add(currentBox.Contents.FirstOrDefault());
-        context.SaveChanges();
         context.SaveChanges();
     }
 }

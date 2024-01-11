@@ -13,7 +13,7 @@ public class Unsubscriber : IDisposable
 
     public void Dispose()
     {
-        if (_observer != null && _observers.Contains(_observer))
+        if (_observer is not null && _observers.Contains(_observer))
             _observers.Remove(_observer);
     }
 }

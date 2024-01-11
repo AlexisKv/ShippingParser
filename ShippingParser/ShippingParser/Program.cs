@@ -1,5 +1,4 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using ShippingParser.Core;
+﻿using ShippingParser.Core;
 using ShippingParser.Db;
 
 namespace ShippingParser;
@@ -22,7 +21,7 @@ public static class Program
         watcher.Dispose();
     }
 
-    private static (FilePublisher,  DataWriter, AsnReader) InitializeAll()
+    private static (FilePublisher, DataWriter, AsnReader) InitializeAll()
     {
         var filePublisher = new FilePublisher();
         var context = new AsnDbContext();
@@ -55,7 +54,7 @@ public static class Program
         watcher.Filter = "data.txt";
 
         watcher.Created += asnReading.Start;
-        
+
         Console.WriteLine($"Monitoring folder: {newFolderPath}");
 
         return watcher;
