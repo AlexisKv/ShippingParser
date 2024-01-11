@@ -11,23 +11,14 @@ This C# .NET project is a solution designed to parse Acknowledgement Shipping No
 This C# .NET solution monitors the "ShippingParsing" folder on the desktop, automatically parsing any dropped files. The solution specifically parses data from files named "data.txt." 
 
 If the "ShippingParsing" folder doesn't exist, it will be created (tested on Windows, may work on Linux).
-## Database Migration and Update
 
-This project utilizes SQLite as its database. To migrate and update the database, follow these steps:
+## RAM Optimization
 
-1. Open a terminal/command prompt and navigate to the project directory.
+For optimal RAM usage, the program employs a chunked file-reading approach. This allows the solution to efficiently handle large files without exceeding available memory.
 
-2. Ensure that you have Entity Framework Tools installed. If not, install it using the following command:
+## Database Setup
 
-   ```bash
-   dotnet tool install --global dotnet-ef
-   ```
- 3. Run the following commands to create and apply migrations:
-     ```bash
-    dotnet ef migrations add InitialMigration
-    dotnet ef database update
-     ```   
-  4. Launch application
+The program uses SQLite as its database, and **there's no need** to manually create database migrations. The required database schema will be automatically generated when the application runs for the first time. 
 
 ## Example Data File
 
