@@ -1,8 +1,8 @@
 ﻿namespace ShippingParser;
 
-public class FileAndPaths
+public static class FileManager
 {
-    public string DetermineDesktopPath()
+    public static string DetermineDesktopPath()
     {
         string? desktopPath = null;
 
@@ -22,9 +22,4 @@ public class FileAndPaths
 
         return desktopPath;
     }
-
-    // private bool ShouldProcessFile(FileSystemEventArgs e)
-    // {
-    //     return e.ChangeType == WatcherChangeTypes.Created;
-    // }
 }

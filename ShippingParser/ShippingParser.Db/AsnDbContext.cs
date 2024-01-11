@@ -1,13 +1,13 @@
 ﻿using Microsoft.EntityFrameworkCore;
-namespace ShippingParser;
+using ShippingParser.Entities;
 
-public class MyDbContext : DbContext
+namespace ShippingParser.Db;
+
+public class AsnDbContext : DbContext
 {
     public DbSet<Box> Boxes { get; set; }
-    
-    //in constructor create check for existing of db. - context.Database.EnsureCreated();
 
-    public MyDbContext()
+    public AsnDbContext()
     {
         this.Database.EnsureCreated();
     }

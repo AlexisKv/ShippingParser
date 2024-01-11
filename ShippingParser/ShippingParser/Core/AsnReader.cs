@@ -1,26 +1,26 @@
-﻿namespace ShippingParser;
+﻿using ShippingParser.Entities;
 
-public class AsnReading
+namespace ShippingParser.Core;
+
+public class AsnReader
 {
-    public AsnReading(FileQueue fileQueue)
+    public AsnReader(AsnProcessor asnProcessor)
     {
-        _fileQueue = fileQueue;
+        _asnProcessor = asnProcessor;
     }
 
-    private FileQueue _fileQueue;
     private string _incompleteLine = string.Empty;
+    private AsnProcessor _asnProcessor;
 
-    public void StartReading(object sender, FileSystemEventArgs e)
+    public void Start(object sender, FileSystemEventArgs e)
     {
-        Task.Run(() => StartReadingAsync(sender, e));
+        Task.Run(() => StartReadingAsync(e.FullPath));
     }
 
-    private async Task StartReadingAsync(object sender, FileSystemEventArgs e)
+    private async Task StartReadingAsync(string fullPath)
     {
-        using var streamReader = new StreamReader(e.FullPath);
-        Box? currentBox = null;
+        using var streamReader = new StreamReader(fullPath);
         char[] buffer = new char[4096];
-
         bool moreContentToRead = true;
 
         while (moreContentToRead)
@@ -33,16 +33,14 @@ public class AsnReading
             }
             else
             {
-                ProcessBuffer(buffer, bytesRead, ref currentBox);
+                ProcessBuffer(buffer, bytesRead);
             }
         }
-
-        if (currentBox != null) AddBox(currentBox);
-
+        
         Console.WriteLine("Shipping info fully saved to database");
     }
 
-    private void ProcessBuffer(char[] buffer, int bytesRead, ref Box currentBox)
+    private void ProcessBuffer(char[] buffer, int bytesRead)
     {
         int position = 0;
 
@@ -66,7 +64,7 @@ public class AsnReading
             string line = bufferContent.Substring(position, lineEnd - position);
 
             // Process the line
-            ProcessLine(line, ref currentBox);
+            _asnProcessor.ParseLine(line);
 
             // Move the position to the next line
             position = lineEnd + 1;
@@ -83,43 +81,11 @@ public class AsnReading
         }
     }
 
-    private void ProcessLine(string line, ref Box? currentBox)
-    {
-        if (line.StartsWith("HDR"))
-        {
-            if (currentBox != null)
-            {
-                AddBox(currentBox);
-            }
+    //Parser class
 
-            var tokens = ClearingAndSplittingLine(line);
-            currentBox = new Box()
-            {
-                Identifier = tokens[1],
-                SupplierIdentifier = tokens[2],
-                Contents = new List<Box.Content>()
-            };
-        }
-        else if (line.StartsWith("LINE"))
-        {
-            var tokens = ClearingAndSplittingLine(line);
-            var boxContent = new Box.Content
-            {
-                PoNumber = tokens[1],
-                Isbn = tokens[2],
-                Quantity = int.Parse(tokens[3])
-            };
-            currentBox.Contents.Add(boxContent);
-        }
-    }
 
     private string[] ClearingAndSplittingLine(string line)
     {
         return line.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
-    }
-
-    private void AddBox(Box box)
-    {
-        _fileQueue.AddBox(box);
     }
 }

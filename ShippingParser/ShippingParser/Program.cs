@@ -1,4 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using ShippingParser.Core;
+using ShippingParser.Db;
 
 namespace ShippingParser;
 
@@ -6,23 +8,36 @@ public static class Program
 {
     static void Main()
     {
-        var fileQueue = new FileQueue();
-       
-        
-        var context = new MyDbContext();
-        context.Database.EnsureCreated();
-        
-        var dataWriter = new DataWriter(fileQueue, context);
-        var filesAndPaths = new FileAndPaths();
+        var (filePublisher, dataWriter, asnReading) = InitializeAll();
 
-        fileQueue.Subscribe(dataWriter);
+        filePublisher.Subscribe(dataWriter);
 
-        string desktopPath = filesAndPaths.DetermineDesktopPath();
+        string folderPath = GetFolderPath();
+
+        var watcher = SetUpWatcher(folderPath, asnReading);
+
+        Console.WriteLine("Press Enter to exit.");
+        Console.ReadLine();
+
+        watcher.Dispose();
+    }
+
+    private static (FilePublisher,  DataWriter, AsnReader) InitializeAll()
+    {
+        var filePublisher = new FilePublisher();
+        var context = new AsnDbContext();
+        var asnProcessor = new AsnProcessor(filePublisher);
+        var dataWriter = new DataWriter(context);
+        var asnReading = new AsnReader(asnProcessor);
+
+        return (filePublisher, dataWriter, asnReading);
+    }
+
+    private static string GetFolderPath()
+    {
+        string desktopPath = FileManager.DetermineDesktopPath();
         string newFolderName = "ShippingParsing";
         string newFolderPath = Path.Combine(desktopPath, newFolderName);
-        
-        var asnReading = new AsnReading(fileQueue);
-
 
         if (!Directory.Exists(newFolderPath))
         {
@@ -30,27 +45,19 @@ public static class Program
             Console.WriteLine($"Created folder: {newFolderPath}");
         }
 
-        // Set up a FileSystemWatcher to monitor the folder
+        return newFolderPath;
+    }
+
+    private static FileSystemWatcher SetUpWatcher(string newFolderPath, AsnReader asnReading)
+    {
         var watcher = new FileSystemWatcher(newFolderPath);
         watcher.EnableRaisingEvents = true;
         watcher.Filter = "data.txt";
 
-        watcher.Created += asnReading.StartReading;
+        watcher.Created += asnReading.Start;
         
         Console.WriteLine($"Monitoring folder: {newFolderPath}");
 
-        Console.WriteLine("Press Enter to exit.");
-        Console.ReadLine();
-
-        // Clean up the watcher
-        watcher.Dispose();
+        return watcher;
     }
-
-    // public static void ConfigureServices(IServiceCollection services) Should I add DI?
-    // {
-    //     services.AddSingleton<FileQueue>()
-    //         .AddSingleton<DataWriter>()
-    //         .AddSingleton<AsnReading>()
-    //         .AddSingleton<FileAndPaths>();
-    // }
 }

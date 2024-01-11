@@ -2,6 +2,10 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ShippingParser", "ShippingParser\ShippingParser.csproj", "{79376BE0-027C-45A1-8621-CC4EC8FCDD1C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ShippingParser.Db", "ShippingParser.Db\ShippingParser.Db.csproj", "{A5C7CD5B-6C5F-4FB3-80C3-FD7528A75C90}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ShippingParser.Entities", "ShippingParser.Entities\ShippingParser.Entities.csproj", "{36F6E864-1186-4669-9356-A918DCB7A692}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -12,5 +16,13 @@ Global
 		{79376BE0-027C-45A1-8621-CC4EC8FCDD1C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{79376BE0-027C-45A1-8621-CC4EC8FCDD1C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{79376BE0-027C-45A1-8621-CC4EC8FCDD1C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A5C7CD5B-6C5F-4FB3-80C3-FD7528A75C90}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A5C7CD5B-6C5F-4FB3-80C3-FD7528A75C90}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A5C7CD5B-6C5F-4FB3-80C3-FD7528A75C90}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A5C7CD5B-6C5F-4FB3-80C3-FD7528A75C90}.Release|Any CPU.Build.0 = Release|Any CPU
+		{36F6E864-1186-4669-9356-A918DCB7A692}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{36F6E864-1186-4669-9356-A918DCB7A692}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{36F6E864-1186-4669-9356-A918DCB7A692}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{36F6E864-1186-4669-9356-A918DCB7A692}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
