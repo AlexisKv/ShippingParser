@@ -29,4 +29,8 @@ This project utilizes SQLite as its database. To migrate and update the database
      ```   
   4. Launch application
 
+## Example Data File
+
+You can use the provided [example data.txt file](https://github.com/AlexisKv/ShippingParser/blob/main/data.txt) to test the parsing functionality. Simply download the file and place it in the "ShippingParsing" folder on your desktop. The solution is configured to parse data exclusively from files named "data.txt."
+
 
